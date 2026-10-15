@@ -367,14 +367,15 @@ function slotDensity(slots,partState,bar){
   return n;
 }
 function rawPick(d,bar,groove,density){
-  const pool=(POOLS[d.slots[0]]||POOLS.bass).concat(density>=7?HOT:[]);
+  const pool=(POOLS[d.slots[0]]||POOLS.pad).concat(density>=7?HOT:[]);
   const h=hashStr(groove+"|"+bar+"|"+d.key);
   let name=pool[h%pool.length];
   if(d.char==="robot"&&(h>>>8)%3===0)name="robot";
   return {name:name,mirror:((h>>>4)&1)===1};
 }
+const JOINED_POOL=["sway","stepTouch","cabbage","sway"];
 function pickMove(d,bar,groove,density){
-  if(!d.playing)return {name:"idleTap",mirror:(bar&1)===1};
+  if(!d.slots.length){const h=hashStr(groove+"|"+bar+"|"+d.key);return {name:JOINED_POOL[h%JOINED_POOL.length],mirror:((h>>>4)&1)===1}}
   if(density===0)return {name:"sway",mirror:(bar&1)===1};
   const now=rawPick(d,bar,groove,density),prev=rawPick(d,bar-1,groove,density);
   if(now.name===prev.name&&now.mirror===prev.mirror)now.mirror=!now.mirror;
@@ -407,11 +408,15 @@ function rebuildDancers(){
   }
   if(!specs.length)specs=SLOTS.map((s,i)=>({key:"house:"+i,app:"house",playing:true}));
   specs=specs.slice(0,12);
-  const n=specs.length;
+  /* The loop parts are dealt out only to phones that are playing. A phone that only joined dances along with no part. */
+  let dealt=specs.filter(sp=>sp.playing);
+  if(!dealt.length)dealt=specs;
+  const n=dealt.length;
   DANCERS=specs.map((sp,i)=>{
     let d=dancerMap.get(sp.key);if(!d){d=newDancer(sp.key);dancerMap.set(sp.key,d)}
     d.app=sp.app;d.playing=sp.playing;
-    d.slots=n<4?SLOTS.filter((s,j)=>j%n===i):[SLOTS[i%4]];
+    const k=dealt.indexOf(sp);
+    d.slots=k<0?[]:n<4?SLOTS.filter((s,j)=>j%n===k):[SLOTS[k%4]];
     const saved=keep(APP+"-char-"+sp.key);
     d.char=CHARS.indexOf(saved)>=0?saved:CHARS[i%4];
     d.bar=null;
@@ -424,8 +429,8 @@ function rebuildDancers(){
 function bump(sp,amt){sp.x=Math.max(-1.6,Math.min(1.6,sp.x+amt))}
 function onHit(slot,ev,t){
   DANCERS.forEach(d=>{
-    if(slot==="drums"&&ev.drum==="bd")bump(d.dip,d.playing?.35:.15);
-    if(d.slots.indexOf(slot)<0||!d.playing)return;
+    if(slot==="drums"&&ev.drum==="bd")bump(d.dip,d.slots.length?.35:.5);
+    if(d.slots.indexOf(slot)<0)return;
     if(slot==="drums"){
       if(ev.drum==="bd"){bump(d.dip,.9);d.flash=Math.max(d.flash,.7)}
       else if(ev.drum==="sd"||ev.drum==="cp"){bump(d.pop,1);bump(d.nod,1);d.mouth=1;d.flash=1}
@@ -689,12 +694,12 @@ function drawFace(d,hx,hy,rx,R,turn,now,ow){
 function drawTag(d,cx,y,S){
   const fs=Math.max(9,Math.min(14,S*.055));
   g.font="700 "+fs+"px Courier New, monospace";g.textAlign="center";
-  const top=prettyApp(d.app),bot=d.playing?d.slots.map(s=>s.toUpperCase()).join(" + "):"WAITING";
+  const top=prettyApp(d.app),bot=d.slots.length?d.slots.map(s=>s.toUpperCase()).join(" + "):"JOINED";
   const w=Math.max(g.measureText(top).width,g.measureText(bot).width)+fs*1.2,h=fs*2.6;
   g.fillStyle="#ffffff";g.strokeStyle=INK;g.lineWidth=2;
   g.beginPath();g.rect(cx-w/2,y,w,h);g.fill();g.stroke();
   g.fillStyle=INK;g.fillText(top,cx,y+fs*1.1);
-  g.fillStyle=d.playing?(PART_COLOR[d.slots[0]]||"#1484e0"):"#7a8da3";g.fillText(bot,cx,y+fs*2.25);
+  g.fillStyle=d.slots.length?(PART_COLOR[d.slots[0]]||"#1484e0"):"#1484e0";g.fillText(bot,cx,y+fs*2.25);
 }
 
 /* ---------- frame ---------- */
@@ -721,7 +726,7 @@ function frame(ts){
       const part=live?partOf(s,bar):null;
       const dens=live?slotDensity(d.slots,part,bar):0;
       d.density=dens;
-      d.move=live?pickMove(d,bar,groove,dens):{name:d.playing?"sway":"idleTap",mirror:(bar&1)===1};
+      d.move=live?pickMove(d,bar,groove,dens):{name:"idleTap",mirror:(bar&1)===1};
     }
   });
 
@@ -740,10 +745,10 @@ function frame(ts){
   layout.forEach(L=>drawSpot(L.cx,L.fy,L.S,L.o.d));
   layout.forEach(L=>{
     const d=L.o.d;
-    const amp=live?(d.playing?.8+Math.min(.45,(d.density||0)*.04):.5):.55;
+    const amp=live?(d.slots.length?.8+Math.min(.45,(d.density||0)*.04):.62):.55;
     const raw=poseAt(d.move.name,d.move.mirror,beat),p={};
     POSE_KEYS.forEach(key=>p[key]=key==="t"?raw.t:BASE[key]+(raw[key]-BASE[key])*amp);
-    const ph=beat%1,bounce=(live&&d.playing?.028:.012)*(.5+.5*Math.cos(ph*Math.PI*2));
+    const ph=beat%1,bounce=(live?(d.slots.length?.028:.02):.012)*(.5+.5*Math.cos(ph*Math.PI*2));
     p.y+=bounce+d.dip.x*.055;
     p.x+=d.hip.x*.035;p.l+=d.sway.x*.11;p.h+=d.nod.x*.12;
     p.aL+=d.pop.x*.4;p.aR+=d.pop.x*.4;

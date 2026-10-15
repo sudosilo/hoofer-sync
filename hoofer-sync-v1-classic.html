@@ -20,9 +20,9 @@ html{background-color:#d6e8fb!important;color-scheme:only light}
 html,body{height:100%;background:#d6e8fb!important;color:#0a2542!important;font-family:"Courier New",Courier,monospace;overflow:hidden}
 button{font-family:inherit}
 
-.root{display:flex;flex-direction:row;height:100vh;width:100vw;overflow:hidden;background:#e6f1fc}
+.root{display:flex;flex-direction:row;height:calc(100vh - 44px);width:100vw;overflow:hidden;background:#e6f1fc}
 
-.sidebar{width:var(--panel-w);flex-shrink:0;height:100vh;overflow-y:auto;overflow-x:hidden;background:#eef5fd;border-right:2px solid var(--line);display:flex;flex-direction:column;scrollbar-width:thin}
+.sidebar{width:var(--panel-w);flex-shrink:0;height:100%;overflow-y:auto;overflow-x:hidden;background:#eef5fd;border-right:2px solid var(--line);display:flex;flex-direction:column;scrollbar-width:thin}
 .sidebar-header{padding:8px 8px 6px;border-bottom:2px solid var(--line);text-align:center;background:#ffffff}
 .sidebar-header h1{font-family:Impact,"Arial Narrow",sans-serif;font-weight:400;font-size:1rem;letter-spacing:.12em;color:var(--accent);line-height:1.15}
 .sidebar-header p{font-size:.5rem;letter-spacing:.15em;color:var(--mid);text-transform:uppercase;margin-top:2px}
@@ -87,7 +87,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 .groove-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:6px}
 
 /* MAIN */
-.main-col{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;min-width:0;background:#e6f1fc}
+.main-col{flex:1;display:flex;flex-direction:column;height:100%;overflow:hidden;min-width:0;background:#e6f1fc}
 .stage-area{flex:1;display:flex;flex-direction:column;align-items:stretch;padding:6px 8px 4px;min-height:0}
 .stage-wrap{width:100%;position:relative;overflow:hidden;background:linear-gradient(to bottom,#f6fbff 0%,#dcecfb 60%,#c6dcf4 100%);border:2px solid var(--line);flex:1;min-height:220px}
 #dancer{width:100%;height:100%}
@@ -174,9 +174,19 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 .step-drum-pip.kick-on{background:#e8542a}
 .step-drum-pip.snare-on{background:#1484e0}
 .step-drum-pip.hat-on{background:#f2b51d}
+.viewtabs{height:44px;display:flex;background:#ffffff;border-bottom:3px solid #0b0f14;padding:4px 6px;gap:0}
+.vtab{flex:1;display:flex;align-items:center;justify-content:center;font-family:Impact,"Arial Narrow",sans-serif;font-size:.9rem;letter-spacing:.08em;color:#0a2542;background:#ffffff;border:2px solid #0b0f14;border-right:none;text-decoration:none}
+.vtab:last-child{border-right:2px solid #0b0f14}
+.vtab.sel{background:#1484e0;color:#ffffff}
 </style>
 </head>
 <body>
+<nav class="viewtabs">
+  <a class="vtab" href="index.html">FLOOR</a>
+  <a class="vtab" href="index.html#moves">MOVES</a>
+  <a class="vtab" href="index.html#wardrobe">WARDROBE</a>
+  <span class="vtab sel">STUDIO</span>
+</nav>
 <div class="root">
 
   <div class="sidebar">
